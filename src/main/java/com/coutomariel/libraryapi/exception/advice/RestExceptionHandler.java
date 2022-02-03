@@ -1,6 +1,7 @@
 package com.coutomariel.libraryapi.exception.advice;
 
 import com.coutomariel.libraryapi.exception.BussinessException;
+import com.coutomariel.libraryapi.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +20,20 @@ public class RestExceptionHandler {
     public ErrorResponse handle(MethodArgumentNotValidException ex){
         List<ErrorObject> errors = getErrors(ex);
         ErrorResponse errorResponse = getErrorResponse(ex, HttpStatus.BAD_REQUEST, errors);
+        return errorResponse;
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException ex){
+        List<ErrorObject> errors = Arrays.asList(new ErrorObject(ex.getMessage(), ex.getClass().toString(), null));
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .code(404)
+                .message(ex.getMessage())
+                .objectName(ex.getClass().toString())
+                .status(HttpStatus.NOT_FOUND.toString())
+                .errors(errors)
+                .build();
         return errorResponse;
     }
 

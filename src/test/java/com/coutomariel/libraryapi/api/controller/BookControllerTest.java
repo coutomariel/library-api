@@ -4,13 +4,13 @@ import com.coutomariel.libraryapi.api.dto.BookDto;
 import com.coutomariel.libraryapi.domain.model.Book;
 import com.coutomariel.libraryapi.domain.service.BookServiceImpl;
 import com.coutomariel.libraryapi.exception.BussinessException;
+import com.coutomariel.libraryapi.exception.ResourceNotFoundException;
 import com.coutomariel.libraryapi.helper.BookHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,12 +21,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.BDDMockito.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -114,7 +113,7 @@ public class BookControllerTest {
     public void shoudGetBookById() throws Exception {
 
         Book book = BookHelper.createMockValidBook();
-        given(bookService.findById(1L)).willReturn(Optional.of(book));
+        given(bookService.findById(1L)).willReturn(book);
 
         MockHttpServletRequestBuilder request = get(BOOK_API + "/" + book.getId());
 
@@ -130,9 +129,33 @@ public class BookControllerTest {
     @Test
     @DisplayName("Deve retornar not foud quando nao encontrar book com id solicitado")
     public void shoudReturnNotFoundWhenBookNotExistsById() throws Exception {
-        given(bookService.findById(anyLong())).willReturn(Optional.empty());
+        given(bookService.findById(anyLong())).willThrow(new ResourceNotFoundException("Resource not found exception."));
         MockHttpServletRequestBuilder request = get(BOOK_API + "/1");
 
+        mockMvc.perform(request)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("errors", Matchers.hasSize(1)))
+        ;
+    }
+
+    @Test
+    @DisplayName("Deve ecluir um book book com id solicitado")
+    public void shoudDeleteBookById() throws Exception {
+        Book book = BookHelper.createMockValidBook();
+        book.setId(1L);
+        MockHttpServletRequestBuilder request = delete(BOOK_API + "/1");
+
+        mockMvc.perform(request)
+                .andExpect(status().isNoContent())
+        ;
+    }
+
+    @Test
+    @DisplayName("Deve retornar not found quando não encontrar um book com o respectivo id")
+    public void shoudReturnNotFoundWhenBookToDeleteNotExistsById() throws Exception {
+        doThrow(new ResourceNotFoundException("Resource not found exception.")).when(bookService).delete(anyLong());
+
+        MockHttpServletRequestBuilder request = delete(BOOK_API + "/1");
         mockMvc.perform(request)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("errors", Matchers.hasSize(1)))

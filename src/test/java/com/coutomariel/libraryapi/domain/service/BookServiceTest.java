@@ -2,6 +2,7 @@ package com.coutomariel.libraryapi.domain.service;
 
 import com.coutomariel.libraryapi.domain.model.Book;
 import com.coutomariel.libraryapi.domain.repository.BookRepository;
+import com.coutomariel.libraryapi.exception.ResourceNotFoundException;
 import com.coutomariel.libraryapi.helper.BookHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +57,31 @@ public class BookServiceTest {
 
         verify(bookRepository, never()).save(any(Book.class));
         assertThat(exception.getMessage().equals("Isbn duplicado"));
+
+    }
+
+    @Test
+    @DisplayName("Deve deletar um livro")
+    public void deleteBookTest() {
+        when(bookRepository.existsById(anyLong())).thenReturn(true);
+
+        bookService.delete(1L);
+
+        verify(bookRepository, times(1)).existsById(anyLong());
+        verify(bookRepository, times(1)).deleteById(anyLong());
+    }
+
+    @Test
+    @DisplayName("Deve lançar resource not found exeption ao tentar deletar um livro não existente")
+    public void shouldThrowsResourceNotFoundWhenTryDeleteBookNotExistsById() {
+        when(bookRepository.existsById(anyLong())).thenReturn(false);
+
+        Throwable exception = catchThrowable(() -> bookService.delete(1L));
+
+        verify(bookRepository, times(1)).existsById(anyLong());
+        verify(bookRepository, never()).deleteById(anyLong());
+        assertThat(exception.getClass()).isEqualTo(ResourceNotFoundException.class);
+        assertThat(exception.getMessage().equals("Resource not found Exception."));
 
     }
 

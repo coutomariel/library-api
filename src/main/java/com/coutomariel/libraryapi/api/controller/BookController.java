@@ -3,7 +3,6 @@ package com.coutomariel.libraryapi.api.controller;
 import com.coutomariel.libraryapi.api.dto.BookDto;
 import com.coutomariel.libraryapi.domain.model.Book;
 import com.coutomariel.libraryapi.domain.service.BookServiceImpl;
-import com.coutomariel.libraryapi.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,8 +32,13 @@ public class BookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBookById(@PathVariable Long id) throws Exception {
-        Book book = bookService.findById(id).orElseThrow(()-> new ResourceNotFoundException("Resource not found exception."));
+        Book book = bookService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(BookDto.from(book));
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBookById(@PathVariable Long id) {
+        bookService.delete(id);
+    }
 }

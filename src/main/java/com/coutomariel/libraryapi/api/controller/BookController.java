@@ -1,7 +1,9 @@
 package com.coutomariel.libraryapi.api.controller;
 
 import com.coutomariel.libraryapi.api.dto.BookDto;
+import com.coutomariel.libraryapi.api.dto.BookUpdateDto;
 import com.coutomariel.libraryapi.domain.model.Book;
+import com.coutomariel.libraryapi.domain.service.BookService;
 import com.coutomariel.libraryapi.domain.service.BookServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,5 +42,11 @@ public class BookController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBookById(@PathVariable Long id) {
         bookService.delete(id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(@PathVariable Long id, @RequestBody BookUpdateDto bookUpdateDto) {
+        Book bookUpdated = bookService.update(id, bookUpdateDto);
+        return ResponseEntity.status(HttpStatus.OK).body(BookDto.from(bookUpdated));
     }
 }

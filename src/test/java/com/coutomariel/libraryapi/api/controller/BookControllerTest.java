@@ -1,6 +1,7 @@
 package com.coutomariel.libraryapi.api.controller;
 
 import com.coutomariel.libraryapi.api.dto.BookDto;
+import com.coutomariel.libraryapi.api.dto.BookUpdateDto;
 import com.coutomariel.libraryapi.domain.model.Book;
 import com.coutomariel.libraryapi.domain.service.BookServiceImpl;
 import com.coutomariel.libraryapi.exception.BussinessException;
@@ -11,6 +12,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -160,6 +162,34 @@ public class BookControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("errors", Matchers.hasSize(1)))
                 .andExpect(jsonPath("errors[0].message").value("Resource not found exception."))
+        ;
+    }
+
+    @Test
+    @DisplayName("Deve atualizar um book")
+    public void shoudUpdateBookById() throws Exception {
+        BookUpdateDto dto = BookUpdateDto
+                .builder().name("Solid").author("Bob Martin").isbn("zxpto").build();
+
+        Book mockBookUpdated = Book.builder()
+                .id(1L)
+                .name(dto.getName())
+                .author(dto.getAuthor())
+                .isbn(dto.getIsbn())
+                .build();
+
+        BDDMockito.given(bookService.update(anyLong(), any(BookUpdateDto.class)))
+                .willReturn(mockBookUpdated);
+
+        MockHttpServletRequestBuilder request = put(BOOK_API + "/1")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto));
+
+        mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("name").value(dto.getName()))
+                .andExpect(jsonPath("author").value(dto.getAuthor()))
         ;
     }
 
